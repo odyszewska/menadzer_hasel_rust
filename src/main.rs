@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 use std::{fs::{self, File}, io::{Read, Write}, path::PathBuf,};
 use directories::ProjectDirs;
 use rpassword::prompt_password;
+use anyhow::{Context, Result};
 
 
 #[derive(Parser)]
