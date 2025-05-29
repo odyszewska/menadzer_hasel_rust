@@ -189,7 +189,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "menadzer_hasel"
+name = "menadzer_hasel_rust"
 version = "0.1.0"
 dependencies = [
  "anyhow",
