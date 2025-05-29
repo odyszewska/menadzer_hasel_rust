@@ -3,7 +3,8 @@ use std::{fs::{self, File}, io::{Read, Write}, path::PathBuf,};
 use directories::ProjectDirs;
 use rpassword::prompt_password;
 use anyhow::{Context, Result};
-
+use rand::distr::Alphanumeric;
+use rand::Rng;
 
 #[derive(Parser)]
 #[command(name = "pass-mng", about = "Menadzer hasel")]
@@ -25,8 +26,8 @@ enum Commands {
     Remove { key: String },
     // Wypisz klucze
     List,
-    // wygeneruj losowe hasło i zapisz je
-    Generate { key: String, length: Option<usize> },
+    // wygeneruj losowe hasło
+    Generate { length: Option<usize> },
 }
 
 
@@ -38,9 +39,9 @@ fn main() -> Result<()> {
         Commands::Show { key } => show(&key)?,
         Commands::Remove { key } => remove(&key)?,
         Commands::List => list_keys()?,
-        Commands::Generate { key, length } => {
+        Commands::Generate { length } => {
             let len = length.unwrap_or(16);
-            generate(&key, len)?
+            generate(len)?
         }
     }
     Ok(())
@@ -76,21 +77,53 @@ fn insert(key: &str) -> Result<()> {
 }
 
 
-
-fn show(p0: &String) -> _ {
-    todo!()
+fn show(key: &str) -> Result<()> {
+    let path = key_to_path(key)?;
+    let mut buf = String::new();
+    File::open(&path)
+        .context("Failed to open password file")?
+        .read_to_string(&mut buf)?;
+    println!("{}", buf);
+    Ok(())
 }
 
-fn remove(p0: &String) -> _ {
-    todo!()
+fn remove(key: &str) -> Result<()> {
+    let path = key_to_path(key)?;
+    fs::remove_file(&path).context("Failed to remove password file")?;
+    println!("Removed password for {}", key);
+    Ok(())
 }
 
-fn list_keys() -> _ {
-    todo!()
+fn list_keys() -> Result<()> {
+    let root = store_dir()?;
+    recurse_list(&root, &root)?;
+    Ok(())
 }
 
-fn generate(p0: &String, p1: usize) -> _ {
-    todo!()
+fn recurse_list(base: &PathBuf, dir: &PathBuf) -> Result<()> {
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        let p = entry.path();
+        if p.is_dir() {
+            recurse_list(base, &p)?;
+        } else if p.extension().and_then(|e| e.to_str()) == Some("txt") {
+            let rel = p.strip_prefix(base)?
+                .with_extension("");
+            println!("{}", rel.display());
+        }
+    }
+    Ok(())
+}
+
+fn generate(length: usize) -> Result<()> {
+    let pwd: String = rand::rng()
+        .sample_iter(&Alphanumeric)
+        .take(length)
+        .map(char::from)
+        .collect();
+    println!("Wygenerowane: {}", pwd);
+
+    Ok(())
 }
 
 fn key_to_path(key: &str) -> Result<PathBuf> {
