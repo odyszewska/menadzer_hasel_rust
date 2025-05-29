@@ -61,17 +61,21 @@ fn init_store() -> Result<()> {
     Ok(())
 }
 
-
+//atomowy wzorzec zapisu plików
 fn insert(key: &str) -> Result<()> {
     let pass = prompt_password("Password: ").context("Failed to read password")?;
-    let dir = store_dir()?;
-    let path = dir.join(key);
-    let mut file = File::create(&path).context("Failed to create file")?;
-    file.write_all(pass.as_bytes()).context("Failed to write password")?;
-    println!("Password saved to {}", path.display());
+    let path = key_to_path(key)?;
+    let tmp = path.with_extension("tmp");
+    let mut f = File::create(&tmp)?;
+    f.write_all(pass.as_bytes())?;
+    f.sync_all()?;
+    fs::rename(&tmp, &path)?;
+    println!("Saved password for {}", key);
     Ok(())
 
 }
+
+
 
 fn show(p0: &String) -> _ {
     todo!()
@@ -87,4 +91,17 @@ fn list_keys() -> _ {
 
 fn generate(p0: &String, p1: usize) -> _ {
     todo!()
+}
+
+fn key_to_path(key: &str) -> Result<PathBuf> {
+    let mut p = store_dir()?;
+    for part in key.split('/') {
+        p.push(part);
+    }
+    p.set_extension("txt");
+    if let Some(parent) = p.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    Ok(p)
+    
 }
