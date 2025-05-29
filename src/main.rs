@@ -61,8 +61,16 @@ fn init_store() -> Result<()> {
     Ok(())
 }
 
-fn insert(p0: &String) -> _ {
-    todo!()
+
+fn insert(key: &str) -> Result<()> {
+    let pass = prompt_password("Password: ").context("Failed to read password")?;
+    let dir = store_dir()?;
+    let path = dir.join(key);
+    let mut file = File::create(&path).context("Failed to create file")?;
+    file.write_all(pass.as_bytes()).context("Failed to write password")?;
+    println!("Password saved to {}", path.display());
+    Ok(())
+
 }
 
 fn show(p0: &String) -> _ {
