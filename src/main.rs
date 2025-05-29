@@ -46,8 +46,19 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn init_store() -> _ {
-    todo!()
+
+fn store_dir() -> Result<PathBuf> {
+    let proj = ProjectDirs::from("io", "MyOrg", "pass-mng")
+        .context("Failed to get project directories")?;
+    Ok(proj.data_local_dir().join("password-store"))
+}
+
+
+fn init_store() -> Result<()> {
+    let dir = store_dir()?;
+    fs::create_dir_all(&dir).context("Failed to create store directory")?;
+    println!("Store directory created: {}", dir.display());
+    Ok(())
 }
 
 fn insert(p0: &String) -> _ {
