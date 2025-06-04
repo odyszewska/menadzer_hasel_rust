@@ -70,7 +70,7 @@ cargo run -- remove <nazwa>
 - Usuwa zapisane hasło o podanej nazwie.
 - Komunikat po usunięciu:
     ```powershell 
-  Removed password for <nazwa_pod_jaka_zapisane_jest_haslo>
+  Removed password for <nazwa>
     ```
 
 4. **Show**
@@ -87,13 +87,13 @@ cargo run -- list
 
 5. **Generate**
 ```powershell
-# Domyślnie (16 znaków):
+#Domyślnie (16 znaków):
 cargo run -- generate
 
-# Podaj konkretną długość (np. 24 znaki):
+#Podaj konkretną długość (np. 24 znaki):
 cargo run -- generate 24
 
-# Dodaj flagę --special, aby włączyć także znaki: !@#$%^&*()
+#Dodaj flagę --special, aby włączyć także znaki: !@#$%^&*()
 cargo run -- generate 24 --special
 ```
 
