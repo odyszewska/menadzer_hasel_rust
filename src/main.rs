@@ -132,9 +132,17 @@ fn generate(length: usize) -> Result<()> {
     Ok(())
 }
 
+fn sanitize_key_part(part:&str) -> Result<()> {
+    if part.is_empty() || part == "." || part == ".." {
+        anyhow::bail!("Key contains invalid character: {}", part);
+    }
+    Ok(())
+}
+
 fn key_to_path(key: &str) -> Result<PathBuf> {
     let mut p = store_dir()?;
     for part in key.split('/') {
+        sanitize_key_part(part)?;
         p.push(part);
     }
     p.set_extension("gpg");
@@ -151,7 +159,7 @@ fn encrypt_with_gpg(plaintext: &[u8], recipient: &str) -> Result<Vec<u8>> {
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
-        .context("Failed to spawn gpg process")?;
+        .with_context(||"Gpg program not found.")?;
     child.stdin.as_mut().context("Failed to open gpg stdin")?
         .write_all(plaintext).context("Failed to write to gpg stdin")?;
     let output = child.wait_with_output().context("Failed to read gpg output")?;
