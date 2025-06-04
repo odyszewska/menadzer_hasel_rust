@@ -3,7 +3,7 @@ use std::{fs::{self, File}, io::{Read, Write}, path::PathBuf,};
 use std::process::{Command, Stdio};
 use directories::ProjectDirs;
 use rpassword::prompt_password;
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
 use rand::distr::Alphanumeric;
 use rand::Rng;
 
@@ -29,7 +29,7 @@ enum Commands {
     // Wypisz klucze
     List,
     // wygeneruj losowe hasło
-    Generate { length: Option<usize> },
+    Generate { length: Option<usize>, #[arg(short, long)] special: bool},
 }
 
 
@@ -41,9 +41,9 @@ fn main() -> Result<()> {
         Commands::Show { key } => show(&key)?,
         Commands::Remove { key } => remove(&key)?,
         Commands::List => list_keys()?,
-        Commands::Generate { length } => {
+        Commands::Generate { length , special} => {
             let len = length.unwrap_or(16);
-            generate(len)?
+            generate(len, special)?
         }
     }
     Ok(())
@@ -121,14 +121,35 @@ fn recurse_list(base: &PathBuf, dir: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn generate(length: usize) -> Result<()> {
-    let pwd: String = rand::rng()
-        .sample_iter(&Alphanumeric)
-        .take(length)
-        .map(char::from)
-        .collect();
-    println!("Wygenerowane: {}", pwd);
+fn generate(length: usize, use_special: bool) -> Result<()> {
+    ensure!(length > 5, "Password length must be bigger than 5");
 
+    if !use_special {
+        let pwd: String = rand::rng()
+            .sample_iter(&Alphanumeric)
+            .take(length)
+            .map(char::from)
+            .collect();
+        println!("Generated: {}", pwd);
+
+        return Ok(())
+    }
+
+    let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+                 abcdefghijklmnopqrstuvwxyz\
+                 0123456789\
+                 !@#$%^&*()";
+    let charset: Vec<char> = chars.chars().collect();
+    let mut rng = rand::rng();
+
+    let pwd: String = (0..length)
+        .map(|_| {
+            let idx = rng.random_range(0..charset.len());
+            charset[idx]
+        })
+        .collect();
+
+    println!("Generated: {}", pwd);
     Ok(())
 }
 
